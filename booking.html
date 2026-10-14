@@ -329,13 +329,18 @@ nav>div>a{white-space:nowrap}
 .bk-load{position:absolute;inset:0;z-index:5;border-radius:26px;background:#000015;display:flex;align-items:center;justify-content:center;overflow:hidden;transition:opacity .8s ease,visibility .8s}
 .bk-load.done{opacity:0;visibility:hidden;pointer-events:none}
 .bk-load .glow{position:absolute;left:50%;top:50%;width:min(460px,92%);aspect-ratio:1;margin:calc(min(460px,92%)/-2) 0 0 calc(min(460px,92%)/-2);border-radius:50%;filter:blur(46px);opacity:.38;background:radial-gradient(circle at 34% 40%,#f69dad 0,rgba(246,157,173,0) 58%),radial-gradient(circle at 68% 62%,#ed6835 0,rgba(237,104,53,0) 58%),radial-gradient(circle at 56% 28%,#f4836f 0,rgba(244,131,111,0) 52%);animation:bkglow 6s ease-in-out infinite alternate}
-.bk-lt{position:relative;margin:0;padding:0 20px;color:#fff4ef;font-size:clamp(18px,2.4vw,24px);font-weight:600;text-align:center;line-height:1.5}
-.bk-dots{display:inline-flex;gap:5px;margin-inline-start:8px;vertical-align:middle}
-.bk-dots i{width:7px;height:7px;border-radius:50%;background:#f69dad;opacity:.25;animation:bkdot 1.2s ease-in-out infinite}
-.bk-dots i:nth-child(2){animation-delay:.2s}.bk-dots i:nth-child(3){animation-delay:.4s}
-@keyframes bkdot{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-4px);background:#ed6835}}
+.bk-lt{position:relative;margin:0;padding:0 20px;font-size:clamp(20px,2.8vw,30px);font-weight:800;letter-spacing:.01em;text-align:center;line-height:1.5;color:#f69dad;background:linear-gradient(90deg,#f69dad 0%,#f4836f 55%,#ed6835 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.bk-lt .wm2{direction:ltr;display:inline-block}
+.bk-dots{display:inline-flex;gap:6px;margin-inline-start:10px;vertical-align:middle;-webkit-text-fill-color:initial}
+.bk-dots i{width:8px;height:8px;border-radius:50%;opacity:0;animation:1.8s linear infinite both}
+.bk-dots i:nth-child(1){background:#f69dad;animation-name:bkd1}
+.bk-dots i:nth-child(2){background:#f4836f;animation-name:bkd2}
+.bk-dots i:nth-child(3){background:#ed6835;animation-name:bkd3}
+@keyframes bkd1{0%{opacity:0}4%,76%{opacity:1}84%,100%{opacity:0}}
+@keyframes bkd2{0%,24%{opacity:0}30%,76%{opacity:1}84%,100%{opacity:0}}
+@keyframes bkd3{0%,49%{opacity:0}55%,76%{opacity:1}84%,100%{opacity:0}}
 @keyframes bkglow{from{transform:scale(.88) rotate(0deg)}to{transform:scale(1.1) rotate(25deg)}}
-@media (prefers-reduced-motion:reduce){.bk-load .glow,.bk-dots i{animation:none}.bk-dots i{opacity:.8}.bk-load{transition:none}}
+@media (prefers-reduced-motion:reduce){.bk-load .glow{animation:none}}
 </style><link rel="icon" href="/favicon.ico" sizes="48x48"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"><link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest"><meta name="theme-color" content="#000015">
 <meta property="og:image" content="https://talkizz.co.il/media/og.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
@@ -361,7 +366,7 @@ nav>div>a{white-space:nowrap}
 <div class="bk-shell"><div class="bk" id="bk" aria-live="polite">
 <noscript><p style="padding:24px">כדי להזמין יש להפעיל JavaScript, או לפנות אלינו בוואטסאפ: <a href="https://wa.me/972547608805">054-7608805</a></p></noscript>
 </div>
-<div class="bk-load" id="bkl" role="status" aria-live="polite"><div class="glow" aria-hidden="true"></div><p class="bk-lt">משכלל תאריכים פנויים ב-<span dir="ltr">TALKIZZ</span><span class="bk-dots" aria-hidden="true"><i></i><i></i><i></i></span></p></div>
+<div class="bk-load" id="bkl" role="status" aria-live="polite"><div class="glow" aria-hidden="true"></div><p class="bk-lt">משכלל תאריכים פנויים ב-<span class="wm2">TALKIZZ</span><span class="bk-dots" aria-hidden="true"><i></i><i></i><i></i></span></p></div>
 </div>
 <script>
 (function(){
