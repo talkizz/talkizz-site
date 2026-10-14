@@ -512,7 +512,7 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape")close()})})(
 <script>(function(){var el=document.getElementById("intro"),de=document.documentElement;if(!el)return;
 if(!de.classList.contains("intro-on")){el.style.display="none";return}
 var start=Date.now(),MIN=1800,fin=false,pg=false,vd=false,hv=document.querySelector(".hvid");
-function hide(){if(fin)return;fin=true;el.classList.add("done");de.classList.remove("intro-on");try{sessionStorage.setItem("tz-intro","1")}catch(e){}setTimeout(function(){el.style.display="none"},900)}
+function hide(){if(fin)return;fin=true;el.classList.add("done");try{sessionStorage.setItem("tz-intro","1")}catch(e){}setTimeout(function(){de.classList.remove("intro-on");el.style.display="none"},900)}
 function chk(){if(pg&&vd){setTimeout(hide,Math.max(0,MIN-(Date.now()-start)))}}
 if(document.readyState==="complete"){pg=true}else{window.addEventListener("load",function(){pg=true;chk()})}
 if(!hv||hv.readyState>=2){vd=true}else{
