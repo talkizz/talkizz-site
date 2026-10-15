@@ -9,6 +9,8 @@
 - [הרצאות וקורסים דיגיטליים](https://talkizz.co.il/lectures-and-courses)
 - [פודקאסט כמתנה](https://talkizz.co.il/podcast-gift): מתנת יום הולדת שנשמרת לשנים
 - [הזמנת אולפן](https://talkizz.co.il/booking)
+- [הצהרת נגישות](https://talkizz.co.il/accessibility)
+- [English version](https://talkizz.co.il/en/): the full site in English (same pages under /en/)
 
 ## פרטים
 - מיקום: שוהם, ישראל
