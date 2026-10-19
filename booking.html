@@ -403,8 +403,8 @@ function ymd(y,m,d){return y+"-"+pad(m)+"-"+pad(d)}
 function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
 var tp=new Intl.DateTimeFormat("en-CA",{timeZone:TZ}).format(new Date()).split("-").map(Number);
 var TODAY=ymd(tp[0],tp[1],tp[2]);
-var st={dur:1,y:tp[0],m:tp[1],date:null,time:null,h24:true,avail:{},slots:null,loading:false,step:"pick",err:""};
-var cache={};
+var st={dur:2,y:tp[0],m:tp[1],date:null,time:null,h24:true,avail:{},slots:null,loading:false,step:"pick",err:""};
+var AV=null;
 
 /* ---------- network ---------- */
 function hash(s){var h=0;for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return Math.abs(h)}
@@ -415,6 +415,7 @@ function api(q){
  if(DEMO)return new Promise(function(res){setTimeout(function(){
   if(q.action==="month"){var p=q.month.split("-").map(Number),n=new Date(p[0],p[1],0).getDate(),d={};
    for(var i=1;i<=n;i++){var k=ymd(p[0],p[1],i),c=demoSlots(k,+q.dur).length;if(c)d[k]=c}res({ok:true,days:d})}
+  else if(q.action==="avail"){var o={};for(var i=0;i<=60;i++){var dt=new Date(tp[0],tp[1]-1,tp[2]+i),k=ymd(dt.getFullYear(),dt.getMonth()+1,dt.getDate()),e={},any=false;[1,2,3].forEach(function(n){var sl=demoSlots(k,n);e[n]=sl;if(sl.length)any=true});if(any)o[k]=e}res({ok:true,days:o})}
   else if(q.action==="slots")res({ok:true,slots:demoSlots(q.date,+q.dur)});
   else res({ok:false,error:"notfound"})},350)});
  return fetch(API+"?"+new URLSearchParams(q)).then(function(r){return r.json()})}
@@ -492,7 +493,7 @@ function submit(e){e.preventDefault();var fm=e.target,v={};["first","last","phon
  v.action="book";v.date=st.date;v.time=st.time;v.dur=st.dur;
  post(v).then(function(r){
   if(r.ok){st.step="done";if(window.gtag)gtag("event","booking_complete",{lang:document.documentElement.lang});st.name=v.first;st.studio=v.studio;st.email=v.email;st.err="";render();window.scrollTo({top:root.getBoundingClientRect().top+scrollY-120,behavior:"smooth"})}
-  else if(r.error==="taken"){st.step="pick";st.time=null;st.slots=null;st.err="מצטערים, השעה הזו נתפסה ממש עכשיו. בחרו שעה אחרת.";delete cache[monthKey()+"|"+st.dur];loadMonth().then(function(){loadSlots()})}
+  else if(r.error==="taken"){st.step="pick";st.time=null;st.slots=null;st.err="מצטערים, השעה הזו נתפסה ממש עכשיו. בחרו שעה אחרת.";AV=null;loadMonth(true).then(function(){loadSlots()})}
   else{btn.disabled=false;btn.textContent="אישור הזמנה";box.textContent=r.message||"משהו השתבש. נסו שוב, או כתבו לנו בוואטסאפ: 054-7608805"}
  }).catch(function(){btn.disabled=false;btn.textContent="אישור הזמנה";box.textContent="בעיית תקשורת. נסו שוב, או כתבו לנו בוואטסאפ: 054-7608805"})}
 
@@ -520,11 +521,15 @@ function renderCancel(){
   api({action:"cancel",id:cq.id,t:cq.t}).then(function(r){if(r.ok){CI={ok:true,status:"בוטל"};renderCancel()}else{x.disabled=false;document.getElementById("bk-e").textContent=r.error==="too_late"?"כבר מאוחר לבטל באתר. כתבו לנו בוואטסאפ.":"הביטול לא הצליח. נסו שוב."}})})}
 
 /* ---------- data ---------- */
-function loadMonth(){var key=monthKey()+"|"+st.dur;
- if(cache[key]){st.avail=cache[key];st.loading=false;renderIf()}else{st.loading=true;renderIf()}
- return api({action:"month",month:monthKey(),dur:st.dur}).then(function(r){if(!r.ok)throw 0;if(key!==monthKey()+"|"+st.dur)return;cache[key]=r.days;st.avail=r.days;st.loading=false;renderIf()}).catch(function(){st.loading=false;if(!cache[key])st.err="לא הצלחנו לטעון את הזמינות. רעננו את העמוד או כתבו לנו בוואטסאפ: 054-7608805";renderIf()})}
-function loadSlots(){if(!st.date)return;var d=st.date;st.slots=null;renderIf();
- return api({action:"slots",date:d,dur:st.dur}).then(function(r){if(st.date!==d)return;st.slots=r.ok?r.slots:[];renderIf()}).catch(function(){st.slots=[];renderIf()})}
+function slotsOf(date,dur){var e=AV&&AV[date];return e&&e[dur]?e[dur]:[]}
+function calcAvail(){var o={},n=new Date(st.y,st.m,0).getDate();for(var i=1;i<=n;i++){var k=ymd(st.y,st.m,i),c=slotsOf(k,st.dur).length;if(c)o[k]=c}st.avail=o;if(st.date)st.slots=slotsOf(st.date,st.dur)}
+function fetchAv(fresh){var q={action:"avail"};if(fresh)q.fresh="1";return api(q).then(function(r){if(!r.ok||!r.days)throw 0;AV=r.days;try{localStorage.setItem("tkAV",JSON.stringify({t:Date.now(),d:r.days}))}catch(e){}calcAvail();return r})}
+function loadMonth(fresh){
+ if(AV&&!fresh){calcAvail();st.loading=false;renderIf();return Promise.resolve()}
+ st.loading=true;renderIf();
+ return fetchAv(fresh).then(function(){st.loading=false;renderIf()}).catch(function(){st.loading=false;if(!AV)st.err="לא הצלחנו לטעון את הזמינות. רעננו את העמוד או כתבו לנו בוואטסאפ: 054-7608805";renderIf()})}
+function loadSlots(){if(!st.date)return;st.slots=slotsOf(st.date,st.dur);renderIf()}
+function bounce(msg){st.step="pick";st.time=null;st.slots=st.date?slotsOf(st.date,st.dur):null;st.err=msg;renderPick()}
 function renderIf(){if(st.step==="pick")renderPick()}
 
 root.addEventListener("click",function(e){var t=e.target.closest("button");if(!t)return;
@@ -532,31 +537,26 @@ root.addEventListener("click",function(e){var t=e.target.closest("button");if(!t
  else if(t.dataset.nav){st.m+=+t.dataset.nav;if(st.m>12){st.m=1;st.y++}if(st.m<1){st.m=12;st.y--}st.date=null;st.slots=null;loadMonth()}
  else if(t.dataset.d){st.date=t.dataset.d;st.err="";loadSlots();if(innerWidth<=860){setTimeout(function(){var el=root.querySelector(".bk-times");if(el)el.scrollIntoView({behavior:"smooth",block:"start"})},350)}}
  else if(t.dataset.h){st.h24=t.dataset.h==="24";renderPick()}
- else if(t.dataset.t){var want=t.dataset.t,dd=st.date;t.disabled=true;
-  api({action:"slots",date:dd,dur:st.dur}).then(function(r){var ok=r.ok&&r.slots.indexOf(want)>-1;
-   if(ok){st.time=want;st.step="form";st.err="";render();window.scrollTo({top:root.getBoundingClientRect().top+scrollY-120,behavior:"smooth"})}
-   else{st.slots=r.ok?r.slots:[];st.err="מצטערים, השעה הזו נתפסה ממש עכשיו. בחרו שעה אחרת.";delete cache[monthKey()+"|"+st.dur];renderPick();loadMonth()}
-  }).catch(function(){st.time=want;st.step="form";st.err="";render()})}});
+  else if(t.dataset.t){var want=t.dataset.t,dd=st.date;st.time=want;st.step="form";st.err="";render();window.scrollTo({top:root.getBoundingClientRect().top+scrollY-120,behavior:"smooth"});
+   fetchAv(true).then(function(){if(st.step==="form"&&st.date===dd&&st.time===want&&slotsOf(dd,st.dur).indexOf(want)<0)bounce("מצטערים, השעה הזו נתפסה ממש עכשיו. בחרו שעה אחרת.")}).catch(function(){})}});
 
 /* ---------- עדכון חי מול היומן ---------- */
 function keepFocus(fn){var a=document.activeElement,k=null;if(a&&root.contains(a)){if(a.dataset.t)k='[data-t="'+a.dataset.t+'"]';else if(a.dataset.d)k='[data-d="'+a.dataset.d+'"]'}fn();if(k){var n=root.querySelector(k);if(n&&!n.disabled)n.focus({preventScroll:true})}}
 var busyRefresh=false;
-function refresh(){if(document.hidden||busyRefresh||cq)return;
- if(st.step==="pick"){busyRefresh=true;var key=monthKey()+"|"+st.dur,d=st.date;
-  var jobs=[api({action:"month",month:monthKey(),dur:st.dur}).then(function(r){if(!r.ok||key!==monthKey()+"|"+st.dur)return false;var ch=JSON.stringify(r.days)!==JSON.stringify(st.avail);cache[key]=r.days;st.avail=r.days;return ch})];
-  if(d)jobs.push(api({action:"slots",date:d,dur:st.dur}).then(function(r){if(!r.ok||d!==st.date)return false;var ch=JSON.stringify(r.slots)!==JSON.stringify(st.slots);st.slots=r.slots;return ch}));
-  Promise.all(jobs).then(function(c){busyRefresh=false;if(st.step==="pick"&&c.some(Boolean))keepFocus(renderPick)}).catch(function(){busyRefresh=false})}
- else if(st.step==="form"){busyRefresh=true;var dd=st.date,tt=st.time;
-  api({action:"slots",date:dd,dur:st.dur}).then(function(r){busyRefresh=false;if(!r.ok||st.step!=="form"||dd!==st.date)return;
-   if(r.slots.indexOf(tt)<0){st.step="pick";st.time=null;st.slots=r.slots;st.err="השעה שבחרתם נתפסה בינתיים. בחרו שעה אחרת.";delete cache[monthKey()+"|"+st.dur];renderPick();loadMonth()}
-  }).catch(function(){busyRefresh=false})}}
+function refresh(){if(document.hidden||busyRefresh||cq)return;busyRefresh=true;var before=JSON.stringify(AV);
+ fetchAv().then(function(){busyRefresh=false;
+  if(st.step==="pick"){if(JSON.stringify(AV)!==before)keepFocus(renderPick)}
+  else if(st.step==="form"){if(slotsOf(st.date,st.dur).indexOf(st.time)<0)bounce("השעה שבחרתם נתפסה בינתיים. בחרו שעה אחרת.")}
+ }).catch(function(){busyRefresh=false})}
 setInterval(refresh,25000);
 document.addEventListener("visibilitychange",function(){if(!document.hidden)refresh()});
 
 function hideLoad(now){var l=document.getElementById("bkl");if(!l||l.classList.contains("done"))return;l.classList.add("done");setTimeout(function(){l.style.display="none"},now===true?0:900)}
 var q=new URLSearchParams(location.search),cq=q.get("cancel")?{id:q.get("cancel"),t:q.get("t")||""}:null;
 if(cq){hideLoad(true);st.step="cancel";render();api({action:"info",id:cq.id,t:cq.t}).then(function(r){CI=r;renderCancel()}).catch(function(){CI={ok:false};renderCancel()})}
-else{render();var t0=Date.now();loadMonth().then(function(){setTimeout(hideLoad,Math.max(0,900-(Date.now()-t0)))});setTimeout(hideLoad,15000)}
+else{try{var c0=JSON.parse(localStorage.getItem("tkAV")||"null");if(c0&&c0.d&&Date.now()-c0.t<600000)AV=c0.d}catch(e){}
+ if(AV){calcAvail();render();hideLoad(true);fetchAv().then(function(){renderIf()}).catch(function(){})}
+ else{render();var t0=Date.now();loadMonth().then(function(){setTimeout(hideLoad,Math.max(0,900-(Date.now()-t0)))});setTimeout(hideLoad,15000)}}
 })();
 </script>
 <p class="bknote">מעדיפים לדבר? כתבו לנו בוואטסאפ: <a href="https://wa.me/972547608805">054-7608805</a></p>
